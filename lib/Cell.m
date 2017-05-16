@@ -13,10 +13,11 @@ methods
 
     %% vertices: return hexagon vertices
     function [x, y] = vertices(obj)
-        linspace(0, 2*pi, 6);
-        x = ;
-        y = ;
+        phase = linspace(0, 2*pi, 7);
+        x = cos(phase) + obj.loc(1);
+        y = sin(phase) + obj.loc(2);
     end
+
     
 end
 
