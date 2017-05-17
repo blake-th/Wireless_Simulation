@@ -1,14 +1,12 @@
 classdef Cell < handle
 properties
-    id;
     loc;
     neighbor;
 end
 
 methods
     %% Cell: constructor
-    function [obj] = Cell(id, loc)
-        obj.id = id;
+    function [obj] = Cell(loc)
         obj.loc = loc;
         obj.neighbor = cell(1, 6);
     end
@@ -22,7 +20,7 @@ methods
 
     %% genNeighbor: generate neighbor by tierNum
     function [obj] = genNeighbor(obj, tierNum)
-        if tierNum < 0
+        if tierNum <= 0
             return;
         end
 
@@ -35,9 +33,20 @@ methods
                 continue;
             end
 
-            
-
+            obj.neighbor{n} = Cell([x(n), y(n)]);
+            obj.neighbor{n}.neighbor{mod(n+2, 6)+1} = obj;
+            obj.neighbor{n}.genNeighbor(tierNum-1);
+                
         end
+
+    end
+
+    %% showBoundary: show boundary
+    function [obj] = showBoundary(obj, r)
+        [x, y] = obj.vertices();
+        hold on;
+        plot(r*[x, x(1)], r*[y, y(1)], 'r');
+        hold off;
     end
 
 end
