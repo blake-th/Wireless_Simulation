@@ -10,6 +10,7 @@ function [f] = util()
   f.thermalNoise = @thermalNoise;
   f.SINR = @SINR;
   f.geoDist = @geoDist;
+  f.shannonCapacity = @shannonCapacity;
 end
 
 %% dB_to_dBm: function description
@@ -59,5 +60,10 @@ end
 
 %% geo: function description
 function [d] = geoDist(loc1, loc2)
-  d = pdist(loc1, loc2);
+  d = pdist([loc1; loc2]);
+end
+
+%% shannonCapacity: function description
+function [c] = shannonCapacity(B, S, I, N)
+  c = B * log2(1+SINR(S, I, N));
 end

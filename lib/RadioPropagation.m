@@ -15,7 +15,7 @@ methods
 
     %% rxPow: compute receive power
     function [p] = rxPow(obj, plArgs, sdArgs, fdArgs, txPow, txGain, rxGain)
-        p = pathLoss.T(plArgs{:}) * shadowing.T(sdArgs{:}) * fading.T(fdArgs{:}) * txPow * txGain * rxGain;
+        p = obj.pathLoss.T(plArgs{:}) * obj.shadowing.T(sdArgs{:}) * obj.fading.T(fdArgs{:}) * txPow * txGain * rxGain;
     end
 
 end
