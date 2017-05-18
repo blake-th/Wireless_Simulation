@@ -20,8 +20,8 @@ methods
     end
 
     %% dist: distance between self and s
-    function [d] = dist(obj, s)
-        d = pdist([obj.location; s.location]);
+    function [d] = dist(obj, s, r)
+        d = r * pdist([obj.location; s.location]);
     end
     
     

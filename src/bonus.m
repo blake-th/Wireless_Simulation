@@ -63,22 +63,22 @@ for n = 1:numMS
     MS{n} = MobileStation([rndInX(n), rndInY(n)], height_MS, txPow_MS, xGain, xGain, TrafficBuffer(trafficBufferSize));
 end
 
-%% 1. [Downlink, Constant Bit Rate]
-%1-1
-figure('Name', 'problem 1-1');
+
+%B-1
+figure('Name', 'problem B-1');
 centralBS.showLoc(r);
 centralBS.cell.showBoundary(r);
 for n = 1:numMS
     MS{n}.showLoc(r);
 end
 axis equal;
-title('1-1 Location');
+title('B-1 Location');
 xlabel('Distance (m)');
 ylabel('Distance (m)');
 
-%1-2
+%B-2
 sumCapacity = 0;
-figure('Name', 'problem 1-2');
+figure('Name', 'problem B-2');
 for n = 1:numMS
     ms = MS{n};
     intfPower = 0;
@@ -96,17 +96,17 @@ for n = 1:numMS
     sumCapacity = sumCapacity + capacity;
     hold on;
     scatter(ms.dist(centralBS, r), capacity);
-    title('1-2 Shannon Capacity');
+    title('B-2 Shannon Capacity');
     xlabel('Distance (m)');
     ylabel('Shannon Capacity (bits/s)');
     hold off;
 end
 
-%1-3
+%B-3
 avgCapacity = sumCapacity / numMS;
-CBR_L = 0.1 * avgCapacity;
-CBR_H = 1.0 * avgCapacity;
-CBR_M = (CBR_H + CBR_L) / 2;
+lambda_L = 0.1 * avgCapacity;
+lambda_H = 1.0;
+lambda_M = (lambda_L + lambda_H) / 2;
 
 
 %{ DEBUG PART
