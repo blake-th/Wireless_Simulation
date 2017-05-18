@@ -72,6 +72,7 @@ for n = 1:numMS
 end
 
 %1-2
+sumCapacity = 0;
 figure('Name', 'problem 1-2');
 for n = 1:numMS
     ms = MS{n};
@@ -87,6 +88,7 @@ for n = 1:numMS
         intfPower = intfPower + rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
     end
     capacity = ut.shannonCapacity(allocatedBW, rxPow, intfPower, thermalNoise);
+    sumCapacity = sumCapacity + capacity;
     hold on;
     scatter(r*ms.dist(centralBS), capacity);
     title('1-2 Shannon Capacity');
@@ -96,9 +98,12 @@ for n = 1:numMS
 end
 
 %1-3
+avgCapacity = sumCapacity / numMS;
+CBR_L = 0.1 * avgCapacity;
+CBR_H = 1.0 * avgCapacity;
+CBR_M = (CBR_H + CBR_L) / 2;
 
-
-%%{
+%%{ DEBUG PART
 figure('Name', 'Debug');
 for n = 1:numel(CELL)
     BS{n}.showLoc(r);
