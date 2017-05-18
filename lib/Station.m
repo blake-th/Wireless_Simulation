@@ -1,6 +1,6 @@
 classdef Station < handle
 properties
-    loc;
+    location;
     height;
     txPow;
     txGain;
@@ -9,15 +9,13 @@ end
 
 methods
     %% Station: constructor
-    function [obj] = Station(loc, height, txPow, txGain, rxGain)
-        obj.loc = loc;
+    function [obj] = Station(location, height, txPow, txGain, rxGain)
+        obj.location = location;
         obj.height = height;
         obj.txPow = txPow;
         obj.txGain = txGain;
         obj.rxGain = rxGain;
     end
-
-    
     
 end
 

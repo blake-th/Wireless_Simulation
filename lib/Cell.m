@@ -9,7 +9,6 @@ methods
     function [obj] = Cell(coordinate, location)
         obj.coordinate = coordinate;
         obj.location = location;
-        obj.showBoundary(1);
     end
 
     %% vertices: return hexagon vertices
@@ -24,6 +23,13 @@ methods
         [x, y] = obj.vertices();
         hold on;
         plot(r*[x, x(1)], r*[y, y(1)], 'r');
+        hold off;
+    end
+
+    %% showId: show id
+    function [obj] = showId(obj, id, r)
+        hold on;
+        text(r*obj.location(1), r*obj.location(2), sprintf('%d', id), 'Color', 'black');
         hold off;
     end
 

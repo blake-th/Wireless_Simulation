@@ -4,8 +4,8 @@ end
 
 methods
     %% MobileStation: constructor
-    function [obj] = MobileStation(loc, height, txPow, txGain, rxGain)
-        obj@Station(loc, height, txPow, txGain, rxGain);
+    function [obj] = MobileStation(location, height, txPow, txGain, rxGain)
+        obj@Station(location, height, txPow, txGain, rxGain);
     end
 
 end
