@@ -5,8 +5,8 @@ end
 
 methods
     %% BaseStation: constructor
-    function [obj] = BaseStation(cell, height, txPow, txGain, rxGain, trafficBuffer)
-        obj@Station(cell.location, height, txPow, txGain, rxGain, trafficBuffer);
+    function [obj] = BaseStation(cell, height, txPow, txGain, rxGain, trafficBuffer, analysis)
+        obj@Station(cell.location, height, txPow, txGain, rxGain, trafficBuffer, analysis);
         obj.cell = cell;
     end
 

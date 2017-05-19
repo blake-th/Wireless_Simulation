@@ -7,6 +7,8 @@ import TwoRay;
 import Fading;
 import Shadowing;
 import TrafficBuffer;
+import Analysis;
+import TrafficData;
 import util.*;
 ut = util();
 
@@ -39,7 +41,7 @@ thermalNoise = ut.thermalNoise(temperature, allocatedBW);
 
 centralBS = [];
 for n = 1:numCell
-    BS{n} = BaseStation(CELL{n}, height_BS, txPow_BS, xGain, xGain, TrafficBuffer(trafficBufferSize));
+    BS{n} = BaseStation(CELL{n}, height_BS, txPow_BS, xGain, xGain, TrafficBuffer(trafficBufferSize), Analysis());
     if CELL{n} == hGrid.cell('0,0,0')
         centralBS = BS{n};
     end
@@ -60,8 +62,13 @@ rndInX = rndInX(1:numMS);
 rndInY = rndInY(1:numMS);
 
 for n = 1:numMS
-    MS{n} = MobileStation([rndInX(n), rndInY(n)], height_MS, txPow_MS, xGain, xGain, TrafficBuffer(trafficBufferSize));
+    MS{n} = MobileStation([rndInX(n), rndInY(n)], height_MS, txPow_MS, xGain, xGain, TrafficBuffer(trafficBufferSize), Analysis());
 end
+
+intfPower = zeros(1, numMS);
+rxPow = zeros(1, numMS);
+shannonCapacity = zeros(1, numMS);
+
 
 %% 1. [Downlink, Constant Bit Rate]
 %1-1
@@ -77,25 +84,21 @@ xlabel('Distance (m)');
 ylabel('Distance (m)');
 
 %1-2
-sumCapacity = 0;
 figure('Name', 'problem 1-2');
 for n = 1:numMS
     ms = MS{n};
-    intfPower = 0;
-    rxPow = 0;
     for m = 1:numCell
         bs = BS{m};
         d = ms.dist(bs, r);
         if bs == centralBS
-            rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
+            rxPow(n) = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
             continue;
         end
-        intfPower = intfPower + rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
+        intfPower(n) = intfPower(n) + rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
     end
-    capacity = ut.shannonCapacity(allocatedBW, rxPow, intfPower, thermalNoise);
-    sumCapacity = sumCapacity + capacity;
+    shannonCapacity(n) = ut.shannonCapacity(allocatedBW, rxPow(n), intfPower(n), thermalNoise);
     hold on;
-    scatter(ms.dist(centralBS, r), capacity);
+    scatter(ms.dist(centralBS, r), shannonCapacity(n));
     title('1-2 Shannon Capacity');
     xlabel('Distance (m)');
     ylabel('Shannon Capacity (bits/s)');
@@ -103,10 +106,44 @@ for n = 1:numMS
 end
 
 %1-3
-avgCapacity = sumCapacity / numMS;
-CBR_L = 0.1 * avgCapacity;
-CBR_H = 1.0 * avgCapacity;
+totalShannonCapacity = sum(shannonCapacity);
+avgShannonCapacity = totalShannonCapacity / numMS;
+CBR_L = 0.7 * avgShannonCapacity;
+CBR_H = 3.0 * avgShannonCapacity;
 CBR_M = (CBR_H + CBR_L) / 2;
+CBR = [CBR_L, CBR_M, CBR_H];
+trafficLoadLevel = categorical({'Low', 'Medium', 'High'});
+
+loss = zeros(1, 3);
+lossRate = zeros(1, 3);
+
+for n = 1:numel(CBR)
+    trafficDataPerSec = CBR(n) * numMS;
+    disp('total traffic data =');
+    disp(trafficDataPerSec);
+
+    for t = 1:simulationDuration
+        centralBS.receiveData(trafficDataPerSec);
+        centralBS.transmitData(totalShannonCapacity);
+
+        if centralBS.trafficBuffer.isOverflow()
+            loss(n) = loss(n) + centralBS.trafficBuffer.drop();
+        end
+    end
+
+    centralBS.trafficBuffer.clear();
+    lossRate(n) = loss(n) / (trafficDataPerSec * simulationDuration);
+end
+
+disp('loss');
+disp(loss);
+
+disp('CBR');
+disp(CBR);
+
+
+figure('Name', ' problem 1-3');
+bar(lossRate);
 
 
 %{ DEBUG PART
