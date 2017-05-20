@@ -1,3 +1,6 @@
+clear;
+clc;
+
 import BaseStation;
 import MobileStation;
 import Cell;
@@ -108,11 +111,10 @@ end
 %1-3
 totalShannonCapacity = sum(shannonCapacity);
 avgShannonCapacity = totalShannonCapacity / numMS;
-CBR_L = 0.7 * avgShannonCapacity;
-CBR_H = 3.0 * avgShannonCapacity;
+CBR_L = 0.8 * avgShannonCapacity;
+CBR_H = 2.4 * avgShannonCapacity;
 CBR_M = (CBR_H + CBR_L) / 2;
 CBR = [CBR_L, CBR_M, CBR_H];
-trafficLoadLevel = categorical({'Low', 'Medium', 'High'});
 
 loss = zeros(1, 3);
 lossRate = zeros(1, 3);
@@ -135,24 +137,13 @@ for n = 1:numel(CBR)
     lossRate(n) = loss(n) / (trafficDataPerSec * simulationDuration);
 end
 
-disp('loss');
-disp(loss);
-
-disp('CBR');
-disp(CBR);
-
-
 figure('Name', ' problem 1-3');
-bar(lossRate);
-
-
-%{ DEBUG PART
-figure('Name', 'Debug');
-for n = 1:numel(CELL)
-    BS{n}.showLoc(r);
-    CELL{n}.showBoundary(r);
-    CELL{n}.showId(n, r);
+bar(lossRate, 'c');
+title('CBR');
+set(gca, 'XTick', 1:numel(CBR), 'XTickLabel', {'Low', 'Medium', 'High'});
+axis([0.5, numel(CBR)+0.5, 0, 1.0]);
+xlabel('Traffic Load');
+ylabel('Bits Loss Probability');
+for n = 1:numel(CBR)
+    text(n, lossRate(n)+0.1, sprintf('%.4f', lossRate(n)));
 end
-%}
-
-
