@@ -1,3 +1,6 @@
+clear;
+clc;
+
 import BaseStation;
 import MobileStation;
 import Cell;
@@ -7,6 +10,8 @@ import TwoRay;
 import Fading;
 import Shadowing;
 import TrafficBuffer;
+import Analysis;
+import TrafficData;
 import util.*;
 ut = util();
 
@@ -39,7 +44,7 @@ thermalNoise = ut.thermalNoise(temperature, allocatedBW);
 
 centralBS = [];
 for n = 1:numCell
-    BS{n} = BaseStation(CELL{n}, height_BS, txPow_BS, xGain, xGain, TrafficBuffer(trafficBufferSize));
+    BS{n} = BaseStation(CELL{n}, height_BS, txPow_BS, xGain, xGain, TrafficBuffer(trafficBufferSize), Analysis());
     if CELL{n} == hGrid.cell('0,0,0')
         centralBS = BS{n};
     end
@@ -60,11 +65,16 @@ rndInX = rndInX(1:numMS);
 rndInY = rndInY(1:numMS);
 
 for n = 1:numMS
-    MS{n} = MobileStation([rndInX(n), rndInY(n)], height_MS, txPow_MS, xGain, xGain, TrafficBuffer(trafficBufferSize));
+    MS{n} = MobileStation([rndInX(n), rndInY(n)], height_MS, txPow_MS, xGain, xGain, TrafficBuffer(trafficBufferSize), Analysis());
 end
 
+intfPower = zeros(1, numMS);
+rxPow = zeros(1, numMS);
+shannonCapacity = zeros(1, numMS);
 
-%B-1
+
+%% 1. [Downlink, Constant Bit Rate]
+%1-1
 figure('Name', 'problem B-1');
 centralBS.showLoc(r);
 centralBS.cell.showBoundary(r);
@@ -76,46 +86,74 @@ title('B-1 Location');
 xlabel('Distance (m)');
 ylabel('Distance (m)');
 
-%B-2
-sumCapacity = 0;
+%1-2
 figure('Name', 'problem B-2');
 for n = 1:numMS
     ms = MS{n};
-    intfPower = 0;
-    rxPow = 0;
     for m = 1:numCell
         bs = BS{m};
         d = ms.dist(bs, r);
         if bs == centralBS
-            rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
+            rxPow(n) = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
             continue;
         end
-        intfPower = intfPower + rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
+        intfPower(n) = intfPower(n) + rpModel.rxPow({d, height_BS, height_MS}, {}, {}, bs.txPow, bs.txGain, ms.rxGain);
     end
-    capacity = ut.shannonCapacity(allocatedBW, rxPow, intfPower, thermalNoise);
-    sumCapacity = sumCapacity + capacity;
+    shannonCapacity(n) = ut.shannonCapacity(allocatedBW, rxPow(n), intfPower(n), thermalNoise);
     hold on;
-    scatter(ms.dist(centralBS, r), capacity);
+    scatter(ms.dist(centralBS, r), shannonCapacity(n));
     title('B-2 Shannon Capacity');
     xlabel('Distance (m)');
     ylabel('Shannon Capacity (bits/s)');
     hold off;
 end
 
-%B-3
-avgCapacity = sumCapacity / numMS;
-lambda_L = 0.1 * avgCapacity;
-lambda_H = 1.0;
-lambda_M = (lambda_L + lambda_H) / 2;
+%1-3
+totalShannonCapacity = sum(shannonCapacity);
+avgShannonCapacity = totalShannonCapacity / numMS;
+
+ratio = trafficBufferSize / avgShannonCapacity;
+disp('ratio');
+disp(ratio);
+
+lambda_L = 0.13 * trafficBufferSize;
+lambda_M = 0.15 * trafficBufferSize;
+lambda_H = 0.17 * trafficBufferSize;
+lambda = [lambda_L, lambda_M, lambda_H];
+
+loss = zeros(1, 3);
+lossRate = zeros(1, 3);
+totalDataSent = 0;
 
 
-%{ DEBUG PART
-figure('Name', 'Debug');
-for n = 1:numel(CELL)
-    BS{n}.showLoc(r);
-    CELL{n}.showBoundary(r);
-    CELL{n}.showId(n, r);
+for n = 1:numel(lambda)
+
+    for t = 1:simulationDuration
+
+        dataSent = sum(poissrnd(lambda(n), 1, numMS));
+        totalDataSent = totalDataSent + dataSent;
+        centralBS.receiveData(dataSent);
+
+        centralBS.transmitData(totalShannonCapacity);
+
+        if centralBS.trafficBuffer.isOverflow()
+            loss(n) = loss(n) + centralBS.trafficBuffer.drop();
+        end
+
+    end
+
+    centralBS.trafficBuffer.clear();
+    lossRate(n) = loss(n) / totalDataSent;
+    totalDataSent = 0;
 end
-%}
 
-
+figure('Name', ' problem B-3');
+bar(lossRate, 'c');
+title('Poisson');
+set(gca, 'XTick', 1:numel(lambda), 'XTickLabel', {'Low', 'Medium', 'High'});
+axis([0.5, numel(lambda)+0.5, 0, 1.0]);
+xlabel('Traffic Load');
+ylabel('Bits Loss Probability');
+for n = 1:numel(lambda)
+    text(n, lossRate(n)+0.1, sprintf('%.4f', lossRate(n)));
+end

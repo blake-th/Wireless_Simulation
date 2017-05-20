@@ -111,9 +111,13 @@ end
 %1-3
 totalShannonCapacity = sum(shannonCapacity);
 avgShannonCapacity = totalShannonCapacity / numMS;
-CBR_L = 0.8 * avgShannonCapacity;
-CBR_H = 2.4 * avgShannonCapacity;
-CBR_M = (CBR_H + CBR_L) / 2;
+ratio = trafficBufferSize / avgShannonCapacity;
+disp('ratio');
+disp(ratio);
+
+CBR_L = 0.13 * trafficBufferSize;
+CBR_M = 0.15 * trafficBufferSize;
+CBR_H = 0.17 * trafficBufferSize;
 CBR = [CBR_L, CBR_M, CBR_H];
 
 loss = zeros(1, 3);
@@ -121,8 +125,6 @@ lossRate = zeros(1, 3);
 
 for n = 1:numel(CBR)
     trafficDataPerSec = CBR(n) * numMS;
-    disp('total traffic data =');
-    disp(trafficDataPerSec);
 
     for t = 1:simulationDuration
         centralBS.receiveData(trafficDataPerSec);
