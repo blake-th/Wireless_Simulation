@@ -4,8 +4,8 @@ end
 
 methods
     %% MobileStation: constructor
-    function [obj] = MobileStation(location, height, txPow, txGain, rxGain, trafficBuffer, analysis)
-        obj@Station(location, height, txPow, txGain, rxGain, trafficBuffer, analysis);
+    function [obj] = MobileStation(id, location, height, txPow, txGain, rxGain)
+        obj@Station(id, location, height, txPow, txGain, rxGain);
     end
 
     %% showLoc: show location
@@ -14,6 +14,11 @@ methods
         scatter(r*obj.location(1), r*obj.location(2), [], 'b', 'filled', 'o');
         hold off;
     end
+
+    %% move: random walk
+    function [outputs] = move(arg)
+        outputs = ;
+    
 
 end
 
