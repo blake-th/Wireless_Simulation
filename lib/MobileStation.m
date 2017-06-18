@@ -5,6 +5,7 @@ properties
     ang;
     timeCount;
     speed;
+    bsHistory;
 end
 
 methods
@@ -13,6 +14,10 @@ methods
         obj@Station(id, location, height, txPow, txGain, rxGain);
         obj.speedRange = speedRange;
         obj.movingTimeRange = movingTimeRange;
+        obj.timeCount = 0;
+        obj.ang = 0;
+        obj.speed = 0;
+        obj.bsHistory = [];
     end
 
     %% showLoc: show location
@@ -22,8 +27,8 @@ methods
         hold off;
     end
 
-    %% nextLoc: random walk
-    function [newLoc] = nextLoc(obj)
+    %% nextMove: random walk
+    function [newLoc] = nextMove(obj)
         if obj.timeCount == 0
             obj.ang = 2 * pi * rand();
             obj.speed = (obj.speedRange(2)-obj.speedRange(1)) * rand() + obj.speedRange(1);

@@ -6,6 +6,8 @@ properties
     txPow;
     txGain;
     rxGain;
+    rxPow;
+    SINR;
 end
 
 methods
@@ -17,12 +19,16 @@ methods
         obj.txPow = txPow;
         obj.txGain = txGain;
         obj.rxGain = rxGain;
+        obj.rxPow = containers.Map('KeyType', 'int32', 'ValueType', 'double');
+        obj.SINR = containers.Map('KeyType', 'int32', 'ValueType', 'double');
     end
 
     %% dist: distance between self and s
     function [d] = dist(obj, s, r)
         d = r * pdist([obj.location; s.location]);
     end
+
+
     
 end
 

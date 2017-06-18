@@ -2,6 +2,7 @@ classdef BaseStation < Station
 properties
     cell;
     register;
+    msPower;
 end
 
 methods
@@ -9,7 +10,8 @@ methods
     function [obj] = BaseStation(id, cell, height, txPow, txGain, rxGain)
         obj@Station(id, cell.location, height, txPow, txGain, rxGain);
         obj.cell = cell;
-        obj.register = containers.Map('KeyType', 'int32', 'ValueType', 'any');
+        obj.register = containers.Map('KeyType', 'int32', 'ValueType', 'logical');
+        %obj.msPower = containers.Map('KeyType', 'int32', 'ValueType', 'double');
     end
 
     %% showLoc: show location
@@ -19,18 +21,8 @@ methods
         hold off;
     end
 
-    %% drop: drop ms whose sinr too low
-    function [obj] = drop(obj)
-        ms = values(obj.register);
-        for n = 1:numel(ms)
 
-        end
-    end
 
-    %% sinr: calc sinr
-    function [ratio] = sinr(obj, o)
-        ratio = 1;
-    end
     
 
 end
