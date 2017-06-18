@@ -14,12 +14,12 @@ import util.*;
 ut = util();
 
 %% handoff criteria
-DROPOUT_THRESHOLD = -100; % dB given
-HANDOFF_THRESHOLD = -90; % dB given
+DROPOUT_THRESHOLD = 0.01; % watt given
+HANDOFF_THRESHOLD = 0.1; % watt given
 HANDOFF_TIME = 2; % given
 HANDOFF_WINDOW = 5;% (avoid noise)
 MOBILITY = 8; % m/s
-SIMULATION_TIME = 1;
+SIMULATION_TIME = 100;
 
 %% problem settings
 temperature = ut.C_to_K(27);
@@ -58,7 +58,7 @@ for n = 1:numCell
 end 
 
 %% init random MS
-MS_SPEEDRANGE = [1, 15] / r;
+MS_SPEEDRANGE = [MOBILITY, MOBILITY] / r;
 MS_MOVINGTIMERANGE = [1, 6] / r;
 while numel(MS) < numMS
     bsId = randi(numBS);
@@ -78,7 +78,7 @@ end
 for n = 1:numBS
     bs = BS{n};
     totalPow = 0;
-
+    %% total power and each ms signal power
     for m = 1:numMS
         ms = MS{m};
         d = ms.dist(bs, r);
@@ -86,7 +86,7 @@ for n = 1:numBS
         totalPow = totalPow + rxPow;
         bs.rxPow(ms.id) = rxPow;
     end
-
+    %% calc sinr
     for m = 1:numMS
         ms = MS{m};
         rxPow = bs.rxPow(ms.id);
@@ -102,7 +102,8 @@ for n = 1:numMS
     SINR = values(ms.SINR, bsId);
     [m, idx] = max(cell2mat(SINR));
     BS{bsId{idx}}.register(ms.id) = true;
-    ms.bsHistory(end+1) = bsId{idx};
+    ms.lastBs = BS{bsId{idx}};
+    ms.registerBsId = bsId{idx};
 end
 
 
@@ -124,16 +125,71 @@ for t = 1:SIMULATION_TIME
         MS{n}.location = newLoc;
     end
 
-    % bs signal power
+    % calc SINR
     for n = 1:numBS
         bs = BS{n};
+        totalPow = 0;
+        %% total power and each ms signal power
         for m = 1:numMS
             ms = MS{m};
             d = ms.dist(bs, r);
-            bs.rxPow(ms.id) = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
+            rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
+            totalPow = totalPow + rxPow;
+            bs.rxPow(ms.id) = rxPow;
         end
-
+        %% sinr
+        for m = 1:numMS
+            ms = MS{m};
+            rxPow = bs.rxPow(ms.id);
+            SINR = ut.SINR(rxPow, totalPow-rxPow, thermalNoise);
+            bs.SINR(ms.id) = SINR;
+            ms.SINR(bs.id) = SINR;
+        end
     end
+
+    %% trigger handoff
+    for n = 1:numMS
+        ms = MS{n};
+        lastBsId = ms.bsHistory(end);
+        if lastBsId == 0 
+            if ms.handoffTime < 0
+                %% find new BS
+                bsId = keys(ms.SINR);
+                SINR = values(ms.SINR, bsId);
+                [m, idx] = max(cell2mat(SINR));
+                ms.startHandoff(ms.lastBs, BS{bsId{idx}}, HANDOFF_TIME);
+            end
+            continue;
+        end
+        lastBs = BS{lastBsId};
+        newBs = lastBs;
+        if ms.SINR(lastBs.id) < HANDOFF_THRESHOLD
+            if ms.handoffTime >= 0
+                continue;
+            end
+            bsId = keys(ms.SINR);
+            SINR = values(ms.SINR, bsId);
+            [m, idx] = max(cell2mat(SINR));
+            newBs = BS{bsId{idx}};
+            if newBs ~= lastBs
+                ms.startHandoff(lastBs, newBs, HANDOFF_TIME);
+            end
+        end
+    end
+
+    %% bs drop
+    for n = 1:numBS
+        bs = BS{n};
+        msId = keys(bs.register);
+        for m = 1:numel(msId)
+            ms = MS{msId{m}};
+            if bs.SINR(msId{m}) < DROPOUT_THRESHOLD
+                remove(bs.register, msId{m});
+                ms.registerBsId = 0;
+            end
+        end
+    end
+
 end
 %%}
 
@@ -144,9 +200,11 @@ end
 for n = 1:numBS
     BS{n}.showLoc(1);
     BS{n}.cell.showBoundary(1);
+    BS{n}.showId(1);
 end
 for n = 1:numMS
     MS{n}.showLoc(1);
+    MS{n}.showId(1);
 end
 hGrid.showBoundary(1);
 %%}

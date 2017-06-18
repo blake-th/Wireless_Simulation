@@ -6,6 +6,10 @@ properties
     timeCount;
     speed;
     bsHistory;
+    handoffTime;
+    registerBsId;
+    lastBs;
+    newBs;
 end
 
 methods
@@ -18,6 +22,8 @@ methods
         obj.ang = 0;
         obj.speed = 0;
         obj.bsHistory = [];
+        obj.handoffTime = -1;
+        obj.registerBsId = 0;
     end
 
     %% showLoc: show location
@@ -34,10 +40,32 @@ methods
             obj.speed = (obj.speedRange(2)-obj.speedRange(1)) * rand() + obj.speedRange(1);
             obj.timeCount = randsample(obj.movingTimeRange(2), 1);
         end
-        obj.timeCount = obj.timeCount - 1;
+        obj.clock();
         newLoc = obj.speed * [cos(obj.ang), sin(obj.ang)];
     end
     
+    %% startHandoff: start handoff
+    function [obj] = startHandoff(obj, lastBs, newBs, handoffTime)
+        obj.handoffTime = handoffTime;
+        obj.lastBs = lastBs;
+        obj.newBs = newBs;
+    end
+
+    %% clock: clock++
+    function [obj] = clock(obj)
+        obj.handoffTime = obj.handoffTime - 1;
+        obj.timeCount = obj.timeCount - 1;
+        obj.bsHistory(end+1) = obj.registerBsId;
+        if obj.handoffTime == 0
+            if isKey(obj.lastBs.register, obj.id)
+                remove(obj.lastBs.register, obj.id);
+            end
+            obj.newBs.register(obj.id) = true;
+            obj.registerBsId = obj.newBs.id;
+            obj.lastBs = obj.newBs;
+            obj.newBs = [];
+        end
+    end
 
 end
 

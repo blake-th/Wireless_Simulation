@@ -28,7 +28,12 @@ methods
         d = r * pdist([obj.location; s.location]);
     end
 
-
+    %% showId: show id
+    function [obj] = showId(obj, r)
+        hold on;
+        text(r*obj.location(1), r*obj.location(2), sprintf('%d', obj.id), 'Color', 'black');
+        hold off;
+    end
     
 end
 
