@@ -1,6 +1,8 @@
 classdef HexagonGrid < handle
 properties
     cell;
+    bndX;
+    bndY;
 end
 
 
@@ -63,6 +65,31 @@ methods
             end
         end
 
+    end
+
+    %% calcBoundary: get boundary
+    function [bndX, bndY] = calcBoundary(obj)
+        cell = values(obj.cell);
+        [bndX, bndY] = cell{1}.vertices();
+        [bndX, bndY] = poly2cw(bndX, bndY);
+        for n = 2:numel(cell)
+            [x, y] = cell{n}.vertices();
+            [x, y] = poly2cw(x, y);
+            [bndX, bndY] = polybool('union', bndX, bndY, x, y);
+        end
+        obj.bndX = bndX;
+        obj.bndY = bndY;
+        bndX = bndX;
+        bndY = bndY;
+    end
+
+    %% showBoundary: show the boundary
+    function [obj] = showBoundary(obj ,r)
+      x = r * obj.bndX;
+      y = r * obj.bndY;
+      hold on;
+      plot(r*obj.bndX, r*obj.bndY, 'magenta');
+      hold off;
     end
 
 end

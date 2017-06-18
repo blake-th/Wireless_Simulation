@@ -58,7 +58,8 @@ for n = 1:numCell
 end 
 
 %% init random MS
-
+MS_SPEEDRANGE = [1, 15];
+MS_MOVINGTIMERANGE = [1, 6];
 while numel(MS) < numMS
     bsId = randi(numBS);
     [cellVerticesX, cellVerticesY] = BS{bsId}.cell.vertices();
@@ -70,27 +71,34 @@ while numel(MS) < numMS
         rndY = 2 * rand() - 1 + BS{bsId}.location(2);
         isIn = inpolygon(rndX, rndY, cellVerticesX, cellVerticesY);
     end
-    MS{end+1} = MobileStation(numel(MS)+1, [rndX, rndY], height_MS, txPow_MS, txGain_MS, rxGain_MS);
+    MS{end+1} = MobileStation(numel(MS)+1, [rndX, rndY], height_MS, txPow_MS, txGain_MS, rxGain_MS, MS_SPEEDRANGE, MS_MOVINGTIMERANGE);
 end
 
-%% start simulation
+%% calc map boundary
+hGrid.calcBoundary();
+
+%% start simulation 
+%{
 for t = 1:SIMULATION_TIME
     % ms move
     for n = 1:numMS
-        [newX, newY] = MS{n}.move();
+        newLoc = MS{n}.nextLoc();
+        if inpolygon(newLoc(1), )
     end
     % bs drop
 end
+%}
 
 
 
-%{
+%%{
 %% show all
 for n = 1:numBS
     BS{n}.showLoc(1);
-    BS{n}.cell.showBoundary(1);
+    %BS{n}.cell.showBoundary(1);
 end
 for n = 1:numMS
     MS{n}.showLoc(1);
 end
-%}
+hGrid.showBoundary(1);
+%%}

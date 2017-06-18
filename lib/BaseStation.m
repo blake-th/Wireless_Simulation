@@ -9,7 +9,7 @@ methods
     function [obj] = BaseStation(id, cell, height, txPow, txGain, rxGain)
         obj@Station(id, cell.location, height, txPow, txGain, rxGain);
         obj.cell = cell;
-        obj.register = containers.Map('KeyType', int32, 'ValueType', 'any');
+        obj.register = containers.Map('KeyType', 'int32', 'ValueType', 'any');
     end
 
     %% showLoc: show location
@@ -28,8 +28,9 @@ methods
     end
 
     %% sinr: calc sinr
-    function [ratio] = sinr(obj, )
-        ratio = ;
+    function [ratio] = sinr(obj, o)
+        ratio = 1;
+    end
     
 
 end
