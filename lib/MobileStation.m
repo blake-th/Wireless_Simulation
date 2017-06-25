@@ -3,27 +3,36 @@ properties
     speedRange;
     movingTimeRange;
     ang;
-    timeCount;
     speed;
     bsHistory;
     handoffTime;
     registerBsId;
     lastBs;
     newBs;
+    timeCount;
+
+    currentBS;
+    registeredBS;
+    maxSINRBS;
+    handoffClock;
+    mobileClock;
 end
 
 methods
     %% MobileStation: constructor
+    %function [obj] = MobileStation(id, location, height, txPow, txGain, rxGain, mobility, handoffClockm, mobileClock)
     function [obj] = MobileStation(id, location, height, txPow, txGain, rxGain, speedRange, movingTimeRange)
         obj@Station(id, location, height, txPow, txGain, rxGain);
-        obj.speedRange = speedRange;
-        obj.movingTimeRange = movingTimeRange;
         obj.timeCount = 0;
         obj.ang = 0;
         obj.speed = 0;
         obj.bsHistory = [];
         obj.handoffTime = -1;
         obj.registerBsId = 0;
+        obj.speedRange = speedRange;
+        obj.movingTimeRange = movingTimeRange;
+        %obj.handoffClock = handoffClock;
+        %obj.mobileClock = mobileClock;
     end
 
     %% showLoc: show location
@@ -36,7 +45,7 @@ methods
     %% nextMove: random walk
     function [newLoc] = nextMove(obj)
         if obj.timeCount == 0
-            obj.ang = 2 * pi * rand();
+            obj.changeAng();
             obj.speed = (obj.speedRange(2)-obj.speedRange(1)) * rand() + obj.speedRange(1);
             obj.timeCount = randsample(obj.movingTimeRange(2), 1);
         end
@@ -66,6 +75,26 @@ methods
             obj.newBs = [];
         end
     end
+
+    %% changeAng: chage ang
+    function [obj] = changeAng(obj)
+        obj.ang = 2 * pi * rand();
+    end
+
+    %% tic: tic
+    function [obj] = tic(obj)
+        obj.clock.tic();
+        if obj.clock.timeup
+
+        end
+    end
+
+    %% duringHandoff: function description
+    function [bool] = duringHandoff(obj)
+        bool = obj.handoffClock.getTime() > 0;
+    end
+    
+
 
 end
 

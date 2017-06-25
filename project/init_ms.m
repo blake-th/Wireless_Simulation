@@ -30,4 +30,5 @@ end
 for n = 1:numMS
     ms = MS{n};
     ms.registeredBS = ms.maxSINRBS;
+    ms.bsHistory(end+1) = ms.registeredBS.id;
 end

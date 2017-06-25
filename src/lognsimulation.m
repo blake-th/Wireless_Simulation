@@ -15,18 +15,18 @@ import util.*;
 ut = util();
 
 %% handoff criteria
-DROPOUT_THRESHOLD = 1e-9; % watt given
+DROPOUT_THRESHOLD = 1e-12; % watt given
 HANDOFF_THRESHOLD = 1e-5; % watt given
 HANDOFF_TIME = 2; % given
-HANDOFF_WINDOW = 5;% (avoid noise)
-MOBILITY = 25; % m/s
-SIMULATION_TIME = 1000;
+HANDOFF_WINDOW = 3;% (avoid noise)
+MOBILITY = 20; % m/s
+SIMULATION_TIME = 400;
 
 %% problem settings
 temperature = ut.C_to_K(27);
 ISD = 500;
 channelBW = 10 * 10^6;
-FRF  = 1;
+FRF = 1;
 txPow_BS = ut.dBm_to_w(33);
 txPow_MS = ut.dBm_to_w(0);
 txGain_BS = ut.dB_to_w(14);
@@ -46,8 +46,8 @@ mu = 0;
 sigma = 6;
 
 %% init
-rpModel = RadioPropagation(TwoRay(), Shadowing(), Fading());
 %rpModel = RadioPropagation(TwoRay(), Shadowing(), Fading());
+rpModel = RadioPropagation(TwoRay(), Lognormal(), Fading());
 hGrid = HexagonGrid(2, @Cell);
 BS = {};
 MS = {};
@@ -88,8 +88,8 @@ for n = 1:numBS
     for m = 1:numMS
         ms = MS{m};
         d = ms.dist(bs, r);
-        rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
-        %rxPow = rpModel.rxPow({d, height_BS, height_MS}, {mu, sigma}, {}, ms.txPow, ms.txGain, bs.rxGain);
+        %rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
+        rxPow = rpModel.rxPow({d, height_BS, height_MS}, {mu, sigma}, {}, ms.txPow, ms.txGain, bs.rxGain);
         totalPow = totalPow + rxPow;
         bs.rxPow(ms.id) = rxPow;
     end
@@ -141,8 +141,8 @@ for t = 1:SIMULATION_TIME
         for m = 1:numMS
             ms = MS{m};
             d = ms.dist(bs, r);
-            rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
-            %rxPow = rpModel.rxPow({d, height_BS, height_MS}, {mu, sigma}, {}, ms.txPow, ms.txGain, bs.rxGain);
+            %rxPow = rpModel.rxPow({d, height_BS, height_MS}, {}, {}, ms.txPow, ms.txGain, bs.rxGain);
+            rxPow = rpModel.rxPow({d, height_BS, height_MS}, {mu, sigma}, {}, ms.txPow, ms.txGain, bs.rxGain);
             totalPow = totalPow + rxPow;
             bs.rxPow(ms.id) = rxPow;
         end
@@ -173,7 +173,7 @@ for t = 1:SIMULATION_TIME
         end
         lastBs = BS{lastBsId};
         newBs = lastBs;
-        if ms.SINR(lastBs.id) < HANDOFF_THRESHOLD
+        if ms.SINRWindow(lastBs.id) < HANDOFF_THRESHOLD
             if ms.handoffTime >= 0
                 continue;
             end
@@ -206,7 +206,7 @@ end
 %% analysis
 numDropout = 0;
 numPingPong = 0;
-
+numHandoff = 0;
 for n = 1:numMS
     history = MS{n}.bsHistory;
     reducedHistory = [history(1)];
@@ -217,6 +217,7 @@ for n = 1:numMS
         end
     end
     reducedHistory = reducedHistory(reducedHistory > 0);
+    numHandoff = numHandoff + numel(reducedHistory) - 1;
     check1 = reducedHistory(1);
     check2 = reducedHistory(2);
     for m = 3:numel(reducedHistory)
@@ -230,12 +231,13 @@ end
 
 avgDropout = numDropout / (numMS * SIMULATION_TIME);
 avgPingPong = numPingPong / (numMS * SIMULATION_TIME);
-
+handoffRate = numHandoff / (numMS * SIMULATION_TIME);
 disp(sprintf('numDropout: %d\n', numDropout));
 disp(sprintf('numPingPong: %d\n', numPingPong));
+disp(sprintf('numHandoff: %d\n', numHandoff));
 disp(sprintf('avgDropout: %d\n', avgDropout));
 disp(sprintf('avgPingPong: %d\n', avgPingPong));
-
+disp(sprintf('handoffRate: %d\n', handoffRate));
 
 
 

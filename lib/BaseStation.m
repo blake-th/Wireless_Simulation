@@ -2,7 +2,6 @@ classdef BaseStation < Station
 properties
     cell;
     register;
-    msPower;
 end
 
 methods
@@ -11,7 +10,6 @@ methods
         obj@Station(id, cell.location, height, txPow, txGain, rxGain);
         obj.cell = cell;
         obj.register = containers.Map('KeyType', 'int32', 'ValueType', 'logical');
-        %obj.msPower = containers.Map('KeyType', 'int32', 'ValueType', 'double');
     end
 
     %% showLoc: show location

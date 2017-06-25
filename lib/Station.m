@@ -8,6 +8,8 @@ properties
     rxGain;
     rxPow;
     SINR;
+    avgSINR;
+    SINRWindow;
 end
 
 methods
@@ -21,6 +23,8 @@ methods
         obj.rxGain = rxGain;
         obj.rxPow = containers.Map('KeyType', 'int32', 'ValueType', 'double');
         obj.SINR = containers.Map('KeyType', 'int32', 'ValueType', 'double');
+        obj.avgSINR = containers.Map('KeyType', 'int32', 'ValueType', 'double');
+        obj.SINRWindow = containers.Map('KeyType', 'int32', 'ValueType', 'double');
     end
 
     %% dist: distance between self and s

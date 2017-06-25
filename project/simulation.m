@@ -7,4 +7,7 @@ for t = 1:SIMULATION_TIME
     run calc_avg_sinr.m;
     run find_max_sinr_bs.m;
 
+    run handoff.m;
+    run dropout.m;
+    run tic.m;
 end
